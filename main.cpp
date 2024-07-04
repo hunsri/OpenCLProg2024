@@ -65,7 +65,7 @@ int main(int argc, char** argv)
   cl::CommandQueue queue(context);
 
   // read image
-  cv::Mat image = cv::imread( "./images/human/1.harold_small.jpg" );
+  cv::Mat image = cv::imread( "./images/human/3.harold_large.jpg" );
 	cv::Mat output = cv::Mat::zeros(image.size(), image.type());
   // cv::Mat convertedImage;
   // cv::cvtColor(image, convertedImage, cv::COLOR_BGR2YCrCb);
@@ -75,6 +75,7 @@ int main(int argc, char** argv)
   cl::Buffer inputBuffer(context, CL_MEM_READ_ONLY, bufferSize);
   cl::Buffer outputBuffer(context, CL_MEM_READ_WRITE, bufferSize);
 
+	double t0 = omp_get_wtime(); // start time
   queue.enqueueWriteBuffer(inputBuffer, CL_TRUE, 0, bufferSize, image.data);
 
   processImageKernel.setArg(0, inputBuffer);
@@ -90,6 +91,8 @@ int main(int argc, char** argv)
   cl::NDRange localSize(BLOCK_SIZE, BLOCK_SIZE, 1);
 	cl::NDRange globalSize(BLOCK_SIZE * numBlocksX, BLOCK_SIZE * numBlocksY, 1);
 
+	std::cout << "Local Size: " << BLOCK_SIZE << " x " << BLOCK_SIZE << " x 1, Global Size: " << BLOCK_SIZE * numBlocksX << " x " << BLOCK_SIZE * numBlocksY << " x 1 \n";
+
 	status = queue.enqueueNDRangeKernel(processImageKernel,
 		cl::NullRange,
 		globalSize,
@@ -103,6 +106,9 @@ int main(int argc, char** argv)
 	queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0, bufferSize, output.data);
 
 	queue.finish();
+
+	double t1 = omp_get_wtime();  // end time
+	std::cout << "Processing took " << (t1 - t0) << " seconds" << std::endl;
 
 
   // display and wait for a key-press, then close the window

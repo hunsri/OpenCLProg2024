@@ -10,12 +10,18 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+.cmake
 
 # Visual Studio generated files
 .vscode
 
 # Build files
 build
+.ninja_deps
+.ninja_log
+build.ninja
 
 # Intellij generated files
 .idea
+
+opencv
