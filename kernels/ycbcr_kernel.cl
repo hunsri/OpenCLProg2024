@@ -1,5 +1,5 @@
 __kernel
-void processImage( __global uchar* inputImage, __global uchar* outputImage, int width, int height, int depth )
+void rgb_to_ycbcr( __global uchar* inputImage, __global uchar* outputImage, int width, int height, int depth )
 {
   // get the thread number in X and Y dimensions
   int x = get_local_size( 0 ) * get_group_id( 0 ) + get_local_id( 0 );
