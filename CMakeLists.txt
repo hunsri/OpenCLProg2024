@@ -5,6 +5,8 @@ project(opencv LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/*.cl")
+
 add_executable(opencv main.cpp )
 FILE(COPY image_kernel.cl images DESTINATION "${CMAKE_BINARY_DIR}")
 
