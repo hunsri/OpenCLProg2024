@@ -15,19 +15,17 @@ void grayscale(__global uchar* inputImage, __global uchar* outputImage, int widt
 
   float Y = 0.299 * R + 0.587 * G + 0.114 * B;
 
-  outputImage[loc + 0] = Y;
-  outputImage[loc + 1] = Y;
-  outputImage[loc + 2] = Y;
+  outputImage[y * width + x] = Y;
 }
 
 
 __kernel
-void dilation(__global uchar* inputImage, __global uchar* outputImage, int width, int height, int depth)
+void dilation(__global uchar* inputImage, __global uchar* outputImage, int width, int height)
 {
   int x = get_global_id(0);
   int y = get_global_id(1);
 
-  const unsigned int loc = (y * width + x) * depth;
+  const unsigned int loc = y * width + x;
 
   if (x >= width || y >= height)
     return;
@@ -41,15 +39,13 @@ void dilation(__global uchar* inputImage, __global uchar* outputImage, int width
       if (x+i < 0 || y+j < 0 || x+i >= width || y+j >= height)
         continue;
 
-      const unsigned int newLoc = ((y+j) * width + (x+i)) * depth;
-      float newY = 0.299 * inputImage[newLoc + 2] + 0.587 * inputImage[newLoc + 1] + 0.114 * inputImage[newLoc];
+      const unsigned int newLoc = (y+j) * width + (x+i);
+      const float newY = inputImage[newLoc];
 
       pxVal = max(pxVal, newY);
     }
   }
 
 
-  outputImage[loc + 0] = pxVal;
-  outputImage[loc + 1] = pxVal;
-  outputImage[loc + 2] = pxVal;
+  outputImage[loc] = pxVal;
 }

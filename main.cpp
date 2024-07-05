@@ -37,6 +37,7 @@ int main(int argc, char** argv)
   cl::Context context({ default_device });
   cl::Program::Sources sources;
   cl_int status;
+  double t0, t1;
 
   std::string ycbcr_kernel_str = read_kernel("kernels/ycbcr_kernel.cl");
   std::string dilation_kernel_str = read_kernel("kernels/dilation_kernel.cl");
@@ -54,15 +55,18 @@ int main(int argc, char** argv)
   // read image
   cv::Mat image = cv::imread("./images/human/1.harold_small.jpg");
   cv::Mat ycbcr_output = cv::Mat::zeros(image.size(), image.type());
-  cv::Mat grayscale_output = cv::Mat::zeros(image.size(), image.type());
-  cv::Mat dilation_output = cv::Mat::zeros(image.size(), image.type());
+  cv::Mat grayscale_output = cv::Mat::zeros(image.size(), CV_8U);
+  cv::Mat dilation_output = cv::Mat::zeros(image.size(), CV_8U);
 
-  size_t bufferSize = sizeof(uchar) * image.total() * image.channels();
+  size_t bufferSizeColor = sizeof(uchar) * image.total() * image.channels();
+  size_t bufferSizeGrayscale = sizeof(uchar) * image.total();
   std::cout << "Image size: " << image.size() << std::endl;
 
   // create buffers on device (allocate space on GPU)
-  cl::Buffer inputBuffer(context, CL_MEM_READ_ONLY, bufferSize);
-  cl::Buffer outputBuffer(context, CL_MEM_READ_WRITE, bufferSize);
+  cl::Buffer inputBufferColor(context, CL_MEM_READ_ONLY, bufferSizeColor);
+  cl::Buffer outputBufferColor(context, CL_MEM_READ_WRITE, bufferSizeColor);
+  cl::Buffer inputBufferGrayscale(context, CL_MEM_READ_ONLY, bufferSizeGrayscale);
+  cl::Buffer outputBufferGrayscale(context, CL_MEM_READ_WRITE, bufferSizeGrayscale);
 
   int numBlocksX = (int) std::ceil((double) image.cols / (double) BLOCK_SIZE);
   int numBlocksY = (int) std::ceil((double) image.rows / (double) BLOCK_SIZE);
@@ -74,39 +78,39 @@ int main(int argc, char** argv)
 
   // *** YCbCr Conversion ***
 
-  Setup setup(queue, inputBuffer, outputBuffer, bufferSize, globalSize, localSize);
+  Setup setup(queue, globalSize, localSize);
 
   cl::Kernel ycbcr_kernel(program, "rgb_to_ycbcr");
-  ycbcr_kernel.setArg(0, inputBuffer);
-  ycbcr_kernel.setArg(1, outputBuffer);
+  ycbcr_kernel.setArg(0, inputBufferColor);
+  ycbcr_kernel.setArg(1, outputBufferColor);
   ycbcr_kernel.setArg(2, image.cols);
   ycbcr_kernel.setArg(3, image.rows);
   ycbcr_kernel.setArg(4, image.channels());
 
-  double t0 = omp_get_wtime(); // start time
+  t0 = omp_get_wtime(); // start time
 
-  status = setup.run_kernel(ycbcr_kernel, image.data, ycbcr_output.data);
+  status = setup.run_kernel(ycbcr_kernel, image.data, ycbcr_output.data, inputBufferColor, outputBufferColor, bufferSizeColor, bufferSizeColor);
   if (status != CL_SUCCESS) {
     std::cout << "Error in YCbCr kernel: " << status << "\n";
     exit(1);
   }
 
-  double t1 = omp_get_wtime(); // end time
+  t1 = omp_get_wtime(); // end time
   std::cout << "Processing for YCbCr took " << (t1 - t0) << " seconds" << std::endl;
 
 
   // *** Grayscale ***
 
   cl::Kernel grayscale_kernel(program, "grayscale");
-  grayscale_kernel.setArg(0, inputBuffer);
-  grayscale_kernel.setArg(1, outputBuffer);
+  grayscale_kernel.setArg(0, inputBufferColor);
+  grayscale_kernel.setArg(1, outputBufferGrayscale);
   grayscale_kernel.setArg(2, image.cols);
   grayscale_kernel.setArg(3, image.rows);
   grayscale_kernel.setArg(4, image.channels());
 
   t0 = omp_get_wtime(); // start time
 
-  status = setup.run_kernel(grayscale_kernel, image.data, grayscale_output.data);
+  status = setup.run_kernel(grayscale_kernel, image.data, grayscale_output.data, inputBufferColor, outputBufferGrayscale, bufferSizeColor, bufferSizeGrayscale);
   if (status != CL_SUCCESS) {
     std::cout << "Error in grayscale kernel: " << status << "\n";
     exit(1);
@@ -119,17 +123,16 @@ int main(int argc, char** argv)
   // *** Dilation ***
 
   cl::Kernel dilation_kernel(program, "dilation");
-  dilation_kernel.setArg(0, inputBuffer);
-  dilation_kernel.setArg(1, outputBuffer);
+  dilation_kernel.setArg(0, inputBufferGrayscale);
+  dilation_kernel.setArg(1, outputBufferGrayscale);
   dilation_kernel.setArg(2, image.cols);
   dilation_kernel.setArg(3, image.rows);
-  dilation_kernel.setArg(4, image.channels());
 
   t0 = omp_get_wtime(); // start time
 
-  status = setup.run_kernel(dilation_kernel, image.data, dilation_output.data);
+  status = setup.run_kernel(dilation_kernel, grayscale_output.data, dilation_output.data, inputBufferGrayscale, outputBufferGrayscale, bufferSizeGrayscale, bufferSizeGrayscale);
   if (status != CL_SUCCESS) {
-    std::cout << "Error in dilation kernel: " << status << "\n";
+    std::cout << "Error in dilation kernel: " << status << std::endl;
     exit(1);
   }
 

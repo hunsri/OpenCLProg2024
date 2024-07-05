@@ -9,7 +9,7 @@
 int main(int argc, char** argv)
 {
   // read image
-  cv::Mat image = cv::imread( "images/human/3.harold_large.jpg", cv::IMREAD_UNCHANGED );
+  cv::Mat image = cv::imread( "images/high_res_image.jpg", cv::IMREAD_UNCHANGED );
   cv::Mat convertedImage;
   cv::cvtColor(image, convertedImage, cv::COLOR_BGR2YCrCb);
 

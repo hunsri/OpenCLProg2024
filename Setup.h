@@ -19,13 +19,10 @@
  class Setup
  {
   public:
-    Setup(cl::CommandQueue queue, cl::Buffer inputBuffer, cl::Buffer outputBuffer, size_t bufferSize, cl::NDRange globalSize, cl::NDRange localSize);
+    Setup(cl::CommandQueue queue, cl::NDRange globalSize, cl::NDRange localSize);
     cl::CommandQueue queue;
-    cl::Buffer inputBuffer;
-    cl::Buffer outputBuffer;
-    size_t bufferSize;
     cl::NDRange globalSize;
     cl::NDRange localSize;
 
-    cl_int run_kernel(cl::Kernel kernel, uchar* inputImage, uchar* outputImage);
+    cl_int run_kernel(cl::Kernel kernel, uchar* inputImage, uchar* outputImage, cl::Buffer inputBuffer, cl::Buffer outputBuffer, size_t inputBufferSize, size_t outputBufferSize);
  };
