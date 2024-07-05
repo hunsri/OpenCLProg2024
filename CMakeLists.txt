@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/kernels/*.cl")
 
-add_executable(opencv main.cpp )
+add_executable(opencv main.cpp Setup.cpp Setup.h)
 FILE(COPY kernels images DESTINATION "${CMAKE_BINARY_DIR}")
 
 find_package(OpenCL REQUIRED)
