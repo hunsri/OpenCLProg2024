@@ -3,9 +3,6 @@ void rgb_to_ycbcr( __global uchar* inputImage, __global uchar* outputImage, int 
 {
   int x = get_global_id(0);
   int y = get_global_id(1);
-  int z = get_global_id(2);
-
-  // printf("x: %d, y: %d, z: %d\n", x, y, z);
 
   const unsigned int loc = (y * width + x) * depth;
 
