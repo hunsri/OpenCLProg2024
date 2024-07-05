@@ -57,7 +57,7 @@ int main(int argc, char** argv)
   cv::Mat grayscale_output = cv::Mat::zeros(image.size(), image.type());
   cv::Mat dilation_output = cv::Mat::zeros(image.size(), image.type());
 
-  size_t bufferSize = sizeof(uchar) * image.total();
+  size_t bufferSize = sizeof(uchar) * image.total() * image.channels();
   std::cout << "Image size: " << image.size() << std::endl;
 
   // create buffers on device (allocate space on GPU)
