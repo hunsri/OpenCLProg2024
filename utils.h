@@ -34,7 +34,7 @@ cl::Device get_device() {
   cl_int status;
 
   if (all_platforms.size() == 0) {
-    std::cout <<" No platforms found. Check OpenCL installation!" << std::endl;
+    std::cerr << " No platforms found. Check OpenCL installation!" << std::endl;
     exit(1);
   }
 
@@ -45,7 +45,7 @@ cl::Device get_device() {
   std::vector<cl::Device> all_devices;
   default_platform.getDevices(CL_DEVICE_TYPE_GPU, &all_devices);
   if(all_devices.size() == 0) {
-    std::cout<<" No devices found. Check OpenCL installation!" << std::endl;
+    std::cerr << " No devices found. Check OpenCL installation!" << std::endl;
     exit(1);
   }
 
@@ -66,9 +66,29 @@ cl::Program get_program(cl::Device default_device, cl::Context context) {
   cl::Program program(context, sources);
 
   if (program.build({ default_device }) != CL_SUCCESS) {
-    std::cout << "Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(default_device) << std::endl;
+    std::cerr << "Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(default_device) << std::endl;
     exit(1);
   }
 
   return program;
+}
+
+cv::Mat get_image(int argc, char** argv) {
+  cv::Mat image;
+  std::string failed_path = "";
+  std::string default_image_path = "./images/human/1.harold_small.jpg";
+  if (argc > 1) {
+    image = cv::imread(argv[1]);
+    if (image.empty())
+      failed_path = argv[1];
+  } else {
+    image = cv::imread(default_image_path);
+    if (image.empty())
+      failed_path = default_image_path;
+  }
+  if (image.empty()) {
+    std::cerr << "Could not read the image: " << failed_path << std::endl;
+    exit(1);
+  }
+  return image;
 }

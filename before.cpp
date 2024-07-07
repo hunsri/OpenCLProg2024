@@ -5,11 +5,12 @@
 #include <omp.h>
 
 #include "opencv2/opencv.hpp"
+#include "utils.h"
 
 int main(int argc, char** argv)
 {
   // read image
-  cv::Mat image = cv::imread("./images/human/1.harold_small.jpg");
+  cv::Mat image = get_image(argc, argv);
   cv::Mat outputImage = cv::Mat::zeros(image.size(), image.type());
 
   double t0 = omp_get_wtime(); // start time

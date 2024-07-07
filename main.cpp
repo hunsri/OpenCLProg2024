@@ -12,7 +12,7 @@ int main(int argc, char** argv)
   double t0, t1;
 
   // read image
-  cv::Mat image = cv::imread("./images/human/1.harold_small.jpg");
+  cv::Mat image = get_image(argc, argv);
   cv::Mat ycbcr_output = cv::Mat::zeros(image.size(), image.type());
   cv::Mat grayscale_output = cv::Mat::zeros(image.size(), CV_8UC1);
   cv::Mat dilation_output = cv::Mat::zeros(image.size(), CV_8UC1);
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 
   status = setup.run_kernel(ycbcr_kernel, image.data, ycbcr_output.data, inputBufferColor, outputBufferColor, bufferSizeColor, bufferSizeColor);
   if (status != CL_SUCCESS) {
-    std::cout << "Error in YCbCr kernel: " << status << "\n";
+    std::cerr << "Error in YCbCr kernel: " << status << "\n";
     exit(1);
   }
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 
   status = setup.run_kernel(grayscale_kernel, image.data, grayscale_output.data, inputBufferColor, outputBufferGrayscale, bufferSizeColor, bufferSizeGrayscale);
   if (status != CL_SUCCESS) {
-    std::cout << "Error in grayscale kernel: " << status << "\n";
+    std::cerr << "Error in grayscale kernel: " << status << "\n";
     exit(1);
   }
 
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 
   status = setup.run_kernel(dilation_kernel, grayscale_output.data, dilation_output.data, inputBufferGrayscale, outputBufferGrayscale, bufferSizeGrayscale, bufferSizeGrayscale);
   if (status != CL_SUCCESS) {
-    std::cout << "Error in dilation kernel: " << status << std::endl;
+    std::cerr << "Error in dilation kernel: " << status << std::endl;
     exit(1);
   }
 
