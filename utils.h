@@ -75,19 +75,13 @@ cl::Program get_program(cl::Device default_device, cl::Context context) {
 
 cv::Mat get_image(int argc, char** argv) {
   cv::Mat image;
-  std::string failed_path = "";
-  std::string default_image_path = "./images/human/1.harold_small.jpg";
-  if (argc > 1) {
-    image = cv::imread(argv[1]);
-    if (image.empty())
-      failed_path = argv[1];
-  } else {
-    image = cv::imread(default_image_path);
-    if (image.empty())
-      failed_path = default_image_path;
-  }
+  std::string image_path = "./images/human/1.harold_small.jpg";
+  if (argc > 1)
+    image_path = argv[1];
+
+  image = cv::imread(image_path);
   if (image.empty()) {
-    std::cerr << "Could not read the image: " << failed_path << std::endl;
+    std::cerr << "Could not read the image: " << image_path << std::endl;
     exit(1);
   }
   return image;
