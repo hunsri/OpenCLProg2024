@@ -1,62 +1,21 @@
 #include "utils.h"
-#include "Setup.h"
 
 #define BLOCK_SIZE 16
-
-cl::Device get_device() {
-  // get all platforms (drivers), e.g. NVIDIA
-  std::vector<cl::Platform> all_platforms;
-  cl::Platform::get(&all_platforms);
-  cl_int status;
-
-  if (all_platforms.size() == 0) {
-    std::cout <<" No platforms found. Check OpenCL installation!" << std::endl;
-    exit(1);
-  }
-
-  cl::Platform default_platform = all_platforms[0];
-  std::cout << "Using platform: " << default_platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
-
-  // get default device (CPUs, GPUs) of the default platform
-  std::vector<cl::Device> all_devices;
-  default_platform.getDevices(CL_DEVICE_TYPE_GPU, &all_devices);
-  if(all_devices.size() == 0) {
-    std::cout<<" No devices found. Check OpenCL installation!" << std::endl;
-    exit(1);
-  }
-
-  cl::Device default_device = all_devices[0];
-  std::cout << "Using device: " << default_device.getInfo<CL_DEVICE_NAME>() << std::endl;
-
-  return default_device;
-}
 
 int main(int argc, char** argv)
 {
   cl::Device default_device = get_device();
   cl::Context context({ default_device });
-  cl::Program::Sources sources;
+  cl::CommandQueue queue(context);
+  cl::Program program = get_program(default_device, context);
   cl_int status;
   double t0, t1;
-
-  std::string ycbcr_kernel_str = read_kernel("kernels/ycbcr_kernel.cl");
-  std::string dilation_kernel_str = read_kernel("kernels/dilation_kernel.cl");
-  sources.push_back({ ycbcr_kernel_str.c_str(), ycbcr_kernel_str.length() });
-  sources.push_back({ dilation_kernel_str.c_str(), dilation_kernel_str.length() });
-
-  cl::Program program(context, sources);
-  cl::CommandQueue queue(context);
-
-  if (program.build({ default_device }) != CL_SUCCESS) {
-    std::cout << "Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(default_device) << std::endl;
-    exit(1);
-  }
 
   // read image
   cv::Mat image = cv::imread("./images/human/1.harold_small.jpg");
   cv::Mat ycbcr_output = cv::Mat::zeros(image.size(), image.type());
-  cv::Mat grayscale_output = cv::Mat::zeros(image.size(), CV_8U);
-  cv::Mat dilation_output = cv::Mat::zeros(image.size(), CV_8U);
+  cv::Mat grayscale_output = cv::Mat::zeros(image.size(), CV_8UC1);
+  cv::Mat dilation_output = cv::Mat::zeros(image.size(), CV_8UC1);
 
   size_t bufferSizeColor = sizeof(uchar) * image.total() * image.channels();
   size_t bufferSizeGrayscale = sizeof(uchar) * image.total();
@@ -76,9 +35,9 @@ int main(int argc, char** argv)
 
   std::cout << "Local Size: " << BLOCK_SIZE << " x " << BLOCK_SIZE << " x 1, Global Size: " << BLOCK_SIZE * numBlocksX << " x " << BLOCK_SIZE * numBlocksY << " x 1" << std::endl;
 
-  // *** YCbCr Conversion ***
-
   Setup setup(queue, globalSize, localSize);
+
+  // *** YCbCr ***
 
   cl::Kernel ycbcr_kernel(program, "rgb_to_ycbcr");
   ycbcr_kernel.setArg(0, inputBufferColor);
@@ -116,7 +75,7 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  t1 = omp_get_wtime();  // end time
+  t1 = omp_get_wtime(); // end time
   std::cout << "Processing for grayscale took " << (t1 - t0) << " seconds" << std::endl;
 
 
@@ -136,7 +95,7 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  t1 = omp_get_wtime();  // end time
+  t1 = omp_get_wtime(); // end time
   std::cout << "Processing for dilation took " << (t1 - t0) << " seconds" << std::endl;
 
 

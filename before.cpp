@@ -9,20 +9,14 @@
 int main(int argc, char** argv)
 {
   // read image
-  cv::Mat image = cv::imread( "images/high_res_image.jpg", cv::IMREAD_UNCHANGED );
-  cv::Mat convertedImage;
-  cv::cvtColor(image, convertedImage, cv::COLOR_BGR2YCrCb);
-
-  // display and wait for a key-press, then close the window
-  cv::imshow( "image", image );
-  int key = cv::waitKey( 0 );
-  cv::destroyAllWindows();
+  cv::Mat image = cv::imread("./images/human/1.harold_small.jpg");
+  cv::Mat outputImage = cv::Mat::zeros(image.size(), image.type());
 
   double t0 = omp_get_wtime(); // start time
 
   #pragma omp parallel for
-  for ( int i = 0; i < image.rows; ++i ) {
-    for ( int j = 0; j < image.cols; ++j ) {
+  for (int i = 0; i < image.rows; ++i) {
+    for (int j = 0; j < image.cols; ++j) {
 
       // get pixel at [i, j] as a <B,G,R> vector
       cv::Vec3b pixel = image.at<cv::Vec3b>( i, j );
@@ -37,16 +31,15 @@ int main(int argc, char** argv)
       float cb = 128 + (-37.797f * R - 74.203f * G + 112.0f * B);
       float cr = 128 + (112.0f * R - 93.786f * G - 18.214f * B);
 
-      image.at<cv::Vec3b>( i, j ) = {y, cr, cb};
+      outputImage.at<cv::Vec3b>(i, j) = {y, cr, cb};
     }
   }
-  double t1 = omp_get_wtime();  // end time
+  double t1 = omp_get_wtime(); // end time
 
   std::cout << "Processing took " << (t1 - t0) << " seconds" << std::endl;
-
-  // display and wait for a key-press, then close the window
-  image.convertTo(convertedImage, CV_32F, 1.0 / 255, 0);
-  cv::imshow( "image", image );
-  key = cv::waitKey( 0 );
+  // cv::cvtColor(image, outputImage, cv::COLOR_BGR2YCrCb);
+  cv::imshow("original", image);
+  cv::imshow("ycbcr", outputImage);
+  int key = cv::waitKey(0);
   cv::destroyAllWindows();
 }
