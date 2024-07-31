@@ -7,6 +7,68 @@
 #include "opencv2/opencv.hpp"
 #include "utils.h"
 
+
+uchar CalculateDillatationForPixel(cv::Mat grayScaleImage, int x, int y)
+{
+  int width = grayScaleImage.cols;
+  int height = grayScaleImage.rows;
+  uchar pxlVal = 0;
+
+  for (int i=-3; i<=3; ++i)
+  {
+    for (int j=-3; j<=3; ++j)
+    {
+      if (x+i < 0 || y+j < 0 || x+i >= height || y+j >= width)
+        continue;
+
+      //looking at a new pixel in the surrounding pixels
+      const uchar newY = grayScaleImage.at<uchar>(x+i, y+j);
+
+      //if it is bigger than the previously looked at, keep the bigger value
+      pxlVal = std::max(pxlVal, newY);
+    }
+
+  }
+
+  return pxlVal;
+
+}
+
+cv::Mat RenderDillatation(cv::Mat image)
+{
+  cv::Mat outputImageGrayscale = cv::Mat::zeros(image.size(), CV_8UC1);
+
+  // grayscaling
+
+  for (int i = 0; i < image.rows; ++i) {
+    for (int j = 0; j < image.cols; ++j) {
+
+      cv::Vec3b pixel = image.at<cv::Vec3b>( i, j );
+
+      float B = pixel[0];
+      float G = pixel[1];
+      float R = pixel[2];
+
+      float Y = 0.299 * R + 0.587 * G + 0.114 * B;
+
+      outputImageGrayscale.at<uchar>(i, j) = {Y};
+    }
+  }
+
+  cv::Mat outputImageDillatation = cv::Mat::zeros(image.size(), CV_8UC1);
+
+  for (int i = 0; i < image.rows; ++i) {
+    for (int j = 0; j < image.cols; ++j) {
+
+      uchar pixel = CalculateDillatationForPixel(outputImageGrayscale, i, j);
+
+      outputImageDillatation.at<uchar>(i, j) = {pixel};
+    }
+  }
+  return outputImageDillatation;
+}
+
+
 int main(int argc, char** argv)
 {
   // read image
@@ -38,10 +100,17 @@ int main(int argc, char** argv)
   }
   double t1 = omp_get_wtime(); // end time
 
-  std::cout << "Processing took " << (t1 - t0) << " seconds" << std::endl;
+  std::cout << "Processing for YCbCr took " << (t1 - t0) << " seconds" << std::endl;
+
+  t0 = omp_get_wtime(); // start time
+  cv::Mat dilatationImage = RenderDillatation(image);
+  t1 = omp_get_wtime(); // end time
+  std::cout << "Processing for Dillatation took " << (t1 - t0) << " seconds" << std::endl;
+
   // cv::cvtColor(image, outputImage, cv::COLOR_BGR2YCrCb);
   cv::imshow("original", image);
   cv::imshow("ycbcr", outputImage);
+  cv::imshow("dilatation", dilatationImage);
   int key = cv::waitKey(0);
   cv::destroyAllWindows();
 }
