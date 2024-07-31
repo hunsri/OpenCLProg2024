@@ -11,9 +11,9 @@ int main(int argc, char** argv)
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
 
   double t0 = omp_get_wtime(); // start time
-  // cv::cvtColor(image, outputImage, cv::COLOR_BGR2YCrCb);
-  cv::cvtColor(image, grayscaleImage, cv::COLOR_BGR2GRAY);
-  cv::dilate(grayscaleImage, outputImage, kernel, cv::Point(-1, -1), 1, 1, 1);
+  // cv::cvtColor(image, outputImage, cv::COLOR_BGR2YCrCb); // <- YCbCr
+  cv::cvtColor(image, grayscaleImage, cv::COLOR_BGR2GRAY);  // <- grayscale
+  cv::dilate(grayscaleImage, outputImage, kernel, cv::Point(-1, -1), 1, 1, 1); // <- dilation
   double t1 = omp_get_wtime(); // end time
 
   std::cout << "Processing took " << (t1 - t0) << " seconds" << std::endl;
