@@ -7,8 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/kernels/*.cl")
 
-#add_executable(opencv main.cpp Setup.cpp Setup.h)
-add_executable(opencv before.cpp Setup.cpp Setup.h)
+# to choose which version you want to execute
+# comment the version that you DONT want to use
+
+add_executable(opencv main.cpp Setup.cpp Setup.h)    #for using OpenCL
+#add_executable(opencv before.cpp Setup.cpp Setup.h) #for using single threaded CPU
 
 FILE(COPY kernels images DESTINATION "${CMAKE_BINARY_DIR}")
 
