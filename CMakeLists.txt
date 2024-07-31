@@ -12,6 +12,7 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/k
 
 add_executable(opencv main.cpp Setup.cpp Setup.h)    #for using OpenCL
 #add_executable(opencv before.cpp Setup.cpp Setup.h) #for using single threaded CPU
+#add_executable(opencv opencv.cpp Setup.cpp Setup.h) #for using OpenCV
 
 FILE(COPY kernels images DESTINATION "${CMAKE_BINARY_DIR}")
 
